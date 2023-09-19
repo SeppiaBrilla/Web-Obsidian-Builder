@@ -1,7 +1,6 @@
-import { link } from 'fs';
 import { Parser } from './Parser';
 import { ObsidianlinkArray } from './links';
-import { MarkdownElement, FindIndiced, GetElements } from './utils';
+import { MarkdownElement, FindIndiced, GetElements, Graph } from './utils';
 
 class WebObsidian{
     
@@ -42,7 +41,7 @@ class WebObsidian{
     }
 
     GetGraph(){
-        return this.AdiacentMatrix;
+        return new Graph(this.NoteNames, this.AdiacentMatrix);       
     }
 }
 

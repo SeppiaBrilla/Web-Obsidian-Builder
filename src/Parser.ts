@@ -43,9 +43,11 @@ class Parser{
 
     private GetMath(mdString: string): string {
         let mathless: string = mdString;
+        console.log(mdString);
         const mathDisplayIndeces: Array<number> = FindIndiced(mdString, '$$');
         const startDisplayIndices: Array<number> = mathDisplayIndeces.filter((_, i) => {return i%2 == 0});
         const finishDisplayIndices: Array<number> = mathDisplayIndeces.filter((_, i) => {return i%2 == 1});
+        console.log(startDisplayIndices, finishDisplayIndices, mathDisplayIndeces);
         const displayElements: Array<MarkdownElement> = GetElements(startDisplayIndices, finishDisplayIndices);
         let mathElements: Array<MathElement> = []
         for(let elem of displayElements){
@@ -57,6 +59,7 @@ class Parser{
         const mathInlineIndeces: Array<number> = FindIndiced(mathless, '$');
         const startInlineIndices: Array<number> = mathInlineIndeces.filter((_, i) => {return i%2 == 0});
         const finishInlineIndices: Array<number> = mathInlineIndeces.filter((_, i) => {return i%2 == 1});
+        console.log(startInlineIndices, finishInlineIndices);
         let InlineElements: Array<MarkdownElement> = GetElements(startInlineIndices, finishInlineIndices);
         for(let elem of InlineElements){
             const id: string = randomUUID();

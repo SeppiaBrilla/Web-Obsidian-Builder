@@ -1,5 +1,59 @@
 const katex = require('katex')
 
+
+class Graph {
+    public Nodes: Array<string> = []
+    public Edges: Array<Edge> = []
+    constructor(nodes: Array<string>, adiacentMatrix: number[][]){
+        this.Nodes = nodes;
+        this.Edges = this.ConvertEdges(adiacentMatrix);
+    }
+    private ConvertEdges(adiacentMatrix:number[][]): Array<Edge>{
+        let edges: Array<Edge> = []
+
+        const size = adiacentMatrix.length;
+        for(let i = 0; i < size; i++){
+            for(let j = 0; j < size; j++){
+                if(adiacentMatrix[i][j] === 1){
+                    edges.push(new Edge(this.Nodes[i], this.Nodes[j]));
+                }
+            }
+        }
+        return edges;
+    }
+
+    public GetEdgesFrom(node:string): Array<Edge>{
+        let edges: Array<Edge> = [];
+        for(let e of this.Edges){
+            if(e.From == node){
+                edges.push(e)
+            }
+        }
+        return edges;
+    }
+
+    public GetEdgesTO(node:string): Array<Edge>{
+        let edges: Array<Edge> = [];
+        for(let e of this.Edges){
+            if(e.To == node){
+                edges.push(e)
+            }
+        }
+        return edges;
+    }
+}
+
+class Edge{
+    public From:string;
+    public To:string;
+
+    constructor(from:string, to:string){
+        this.From = from;
+        this.To = to;
+    }
+}
+
+
 function GetElements(starts: Array<number>, finishes: Array<number>): Array<MarkdownElement>{
         if(starts.length != finishes.length)
             throw new Error("starts and finishes must have the same length");
@@ -52,4 +106,4 @@ function FindIndiced(originString:string, subString:string): Array<number>{
     return match;
 }
 
-export { FindIndiced, MarkdownElement, MathElement, GetElements };
+export { FindIndiced, MarkdownElement, MathElement, Graph, GetElements };

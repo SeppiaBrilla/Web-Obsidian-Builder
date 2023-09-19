@@ -1,15 +1,36 @@
-import { Parser } from './Parser';
 import { WebObsidian } from './WebObsidian';
-import { writeFileSync } from 'fs'
+import { lstatSync, readFileSync, readdirSync, writeFileSync } from 'fs'
 import { CreateObsidianLinksFromFolder } from './links';
-const text = `It is a non-linear [[Image filters]] that deals with Gaussian noise without blurring the image like [[Mean filter]] and [[Gaussian filter]]. The formula of a bilateral filter is: $$ \\begin{align} &O(p) = \\sum_{q \\in S} H(p,q) *I_q\\\\ &H(p,q) = \\frac{1}{W(p)}G_{\\sigma_s}(d_s(p,q))G_{\\sigma_r}(d_r(p,q))\\\\ &d_s(p,q) = ||p - q||2 = \\sqrt{(u_p - u_q)^2 - (v_p - v_q)^2} \\rightarrow \\text{spatial distance}\\\\ &d_r(I_p,I_q) = |I_p - I_q| \\rightarrow \\text{range/intensity distance}\\\\ &W(p) = \\sum{q \\in s} G_{\\sigma_s}(d_s(p,q))G_{\\sigma_r}(d_r(p,q)) \\rightarrow \\text{normalization factor} \\end{align} $$ ![[Pasted image 20230309192143.png]]
+import { basename, extname, join } from 'path';
 
-In practice, the filter takes into account both the spatial and the color distance of the pixels and uses it to increase or lower the influence of the neighbors pixels on the intensity of the current one.`;
-
-const s = CreateObsidianLinksFromFolder('/home/seppiabrilla/Documents/University/University', '127.0.0.1', true);
+const s = CreateObsidianLinksFromFolder('./test_vault/test', '127.0.0.1', true);
+let files:Array<string> = [];
+const callback = (filename:string) => {
+    if(extname(filename) === ".md") {
+            files.push(filename);
+        }
+}
+walk('./test_vault/test',callback);
 let p = new WebObsidian(s)
-let l = p.AddAndConvert('Bilateral filter', text);
+for(let file of files){
+    const name = basename(file).replace('.md','');
+    console.log(`analyzing note ${name}`)
+    p.AddAndConvert(name, readFileSync(file).toString());
+
+}
 const graph = p.GetGraph();
-console.log(l.length);
-console.log(graph.length, graph[0].length);
-writeFileSync('prova.html',l);
+console.log(graph);
+
+
+
+function walk(currentDirPath:string, callback:Function) {
+    for(let file of readdirSync(currentDirPath)){
+        const filePath = join(currentDirPath, file);
+        const stat = lstatSync(filePath);
+        if (stat.isFile()) {
+            callback(filePath);
+        } else if (stat.isDirectory()) {
+            walk(filePath, callback);
+        }
+    }
+}
