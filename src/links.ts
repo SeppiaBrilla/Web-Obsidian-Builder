@@ -36,6 +36,7 @@ class ObsidianlinkArray extends Array<ObsidianLink>{
 
 function CreateObsidianLinksFromFolder(folderName:string, baseUri:string, keepStructure:boolean = true): ObsidianlinkArray{
     let links: Array<ObsidianLink> = [];
+    const nameToRemove = folderName.replace('./','').replace('../','');
     const callback = (filename: string) => {
         if(extname(filename) === ".md") {
             let uri = baseUri 
@@ -43,7 +44,7 @@ function CreateObsidianLinksFromFolder(folderName:string, baseUri:string, keepSt
                 uri += "/"
             }
             if(keepStructure){
-                let name = filename.replace(".md", "").replaceAll(" ", "_");
+                let name = filename.replace(".md", "").replace(nameToRemove,'').replaceAll(" ", "_");
                 if(name[0] === "/"){
                     name = name.substring(1);
                 }

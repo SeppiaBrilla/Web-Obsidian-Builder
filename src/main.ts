@@ -3,7 +3,7 @@ import { lstatSync, readFileSync, readdirSync, writeFileSync } from 'fs'
 import { CreateObsidianLinksFromFolder } from './links';
 import { basename, extname, join } from 'path';
 
-const s = CreateObsidianLinksFromFolder('./test_vault/test', '127.0.0.1', true);
+const s = CreateObsidianLinksFromFolder('./test_vault/test', '.', true);
 let files:Array<string> = [];
 const callback = (filename:string) => {
     if(extname(filename) === ".md") {
@@ -12,11 +12,12 @@ const callback = (filename:string) => {
 }
 walk('./test_vault/test',callback);
 let p = new WebObsidian(s)
+let new_file = "";
 for(let file of files){
     const name = basename(file).replace('.md','');
     console.log(`analyzing note ${name}`)
-    p.AddAndConvert(name, readFileSync(file).toString());
-
+    new_file = p.AddAndConvert(name, readFileSync(file).toString());
+    writeFileSync(`./test_vault/out/${name}.html`, new_file); 
 }
 const graph = p.GetGraph();
 console.log(graph);

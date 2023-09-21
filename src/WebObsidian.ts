@@ -1,11 +1,9 @@
 import { ObsidianlinkArray } from './links';
 import {  Graph } from './graph';
-import { MarkdownElement, MathElement, Token} from './types';
+import { MarkdownElement, MathElement, Element, LinkElement, Token, MermaidElement} from './types';
 import { Tokenize, BuildElements } from './Parser';
 import { randomUUID } from "crypto";
-import { type } from 'os';
-import { defaultMaxListeners } from 'events';
-
+import { marked } from 'marked';
 
 
 class WebObsidian{
@@ -15,7 +13,7 @@ class WebObsidian{
     AdiacentMatrix:number[][];
     NoteNames:Array<string>;
 
-    private MathElements: Array<MathElement> = [];
+    private Elements: Array<Element> = [];
 
     constructor(links:ObsidianlinkArray){
         this.Links = links;
@@ -35,13 +33,25 @@ class WebObsidian{
         const from = this.NoteNames.indexOf(noteName);
         const tokens = Tokenize(noteText);
         const elements = BuildElements(tokens, noteText);
+        
+        noteText = this.RemoveElementAndConvert(noteText, elements, from);
+        return this.Rebuild(noteText);
+    }
 
-        const buildGraphAndConvert = (element:MarkdownElement, mdString:string) => {
-            const currentLink:string = noteText.substring(element.Start + 2, element.Finish);
-            const to = this.NoteNames.indexOf(currentLink);
-            this.AdiacentMatrix[from][to] = 1;
-            return this.ConvertLinksElements(element, mdString);
-        }
+    Convert(noteText:string){
+        const tokens = Tokenize(noteText);
+        const elements = BuildElements(tokens, noteText);
+        
+        noteText = this.RemoveElementAndConvert(noteText, elements);
+        return this.Rebuild(noteText);
+    }
+
+    GetGraph(){
+        return new Graph(this.NoteNames, this.AdiacentMatrix);       
+    }
+
+    private RemoveElementAndConvert(noteText:string, elements:Array<MarkdownElement>, noteIndex:number|undefined = undefined){
+        const convertOnly: boolean = noteIndex === undefined;
         for(let element of elements){
             if(element.Type === Token.u){
                 throw new Error("undefined element found");
@@ -54,45 +64,60 @@ class WebObsidian{
                     noteText = this.ConvertInlineMathElement(element, noteText);
                 break;
                 case Token[Token['[[']]:
-                    noteText = buildGraphAndConvert(element, noteText);
+                    if(convertOnly){
+                        noteText = this.ConvertLinksElement(element, noteText);
+                        break;
+                    }
+                    noteText = this.BuildGraphAndConvert(element, noteText, (<number>noteIndex));
                 break;
-                
+                case Token[Token['```mermaid']]:
+                    noteText = this.ConvertMermaidElement(element,noteText);
+                break;
             }
         }
-        return noteText;
+        return marked.parse(noteText);
     }
 
-    Convert(noteText:string, elements:Array<MarkdownElement>, functions: {[id:string] : Function}){
-        for(let element of elements){
-            if(element.Type === Token.u){
-                throw new Error("undefined element found");
-            }
-            noteText = functions[Token[element.Type]](element, noteText)
+    private Rebuild(noteText:string): string{
+        for(let elem of this.Elements){
+            noteText = noteText.replace(elem.Id,elem.Value);
         }
         return noteText;
-    }
-
-    GetGraph(){
-        return new Graph(this.NoteNames, this.AdiacentMatrix);       
     }
 
     private ConvertDisplayMathElement(element:MarkdownElement, mdString:string): string{
         const id: string = randomUUID();
         const currentMath:string = element.Value;
-        this.MathElements.push(new MathElement(currentMath, id, true));
+        this.Elements.push(new MathElement(currentMath, id, true));
         return mdString.replace(`$$${currentMath}$$`, id);
     }
 
     private ConvertInlineMathElement(element:MarkdownElement, mdString:string): string{
         const id: string = randomUUID();
         const currentMath:string = element.Value;
-        this.MathElements.push(new MathElement(currentMath, id, true));
+        this.Elements.push(new MathElement(currentMath, id, true));
         return mdString.replace(`$${currentMath}$`, id);
     }
 
-    private ConvertLinksElements(element:MarkdownElement, mdString:string):string {
-            const currentLink:string = element.Value;
-            return mdString.replace(`[[${currentLink}]]`, `[${currentLink}](${this.LinksDict[currentLink]})`); 
+    private ConvertLinksElement(element:MarkdownElement, mdString:string):string {
+        const id: string = randomUUID();
+        const currentLink:string = element.Value;
+        this.Elements.push(new LinkElement(currentLink, id, this.LinksDict[currentLink] + ".html"));
+        return mdString.replace(`[[${currentLink}]]`, id); 
+    }
+
+    private ConvertMermaidElement(element:MarkdownElement, mdString:string):string{
+        const id:string = randomUUID();
+        const currentMermaid:string = element.Value;
+        this.Elements.push(new MermaidElement(currentMermaid, id));
+        return mdString.replace(`\`\`\`mermaid${currentMermaid}\`\`\``,id);
+    }
+
+    private BuildGraphAndConvert = (element:MarkdownElement, mdString:string, from:number) => {
+        const currentLink:string = element.Value;
+        const to = this.NoteNames.indexOf(currentLink);
+        this.AdiacentMatrix[from][to] = 1;
+        return this.ConvertLinksElement(element, mdString);
     }
 }
 
