@@ -1,79 +1,107 @@
-import { marked } from 'marked';
-import { ObsidianlinkArray } from './links';
-import { randomUUID } from "crypto";
-import { MathElement, FindIndiced, MarkdownElement, GetElements } from './utils';
+import { MarkdownElement, Token, MarkdownToken } from './types';
 
 
-class Parser{
+function ToToken(str:string): Token{
 
-    private Links : ObsidianlinkArray;
-    private MathElements: Array<MathElement> = [];
-    
-    constructor(links: ObsidianlinkArray){
-        this.Links = links
-    }
-
-    public Convert(mdString:string): string {
-        const mathless = this.GetMath(mdString);
-        const correctLinks = this.RecreateLinks(mathless); 
-        const htmlMd = marked.parse(correctLinks);
-        return this.Rebuild(htmlMd);
-    }
-
-    private Rebuild(str: string): string {
-        let finalStr = str;
-        for(let mathElem of this.MathElements){
-            finalStr = finalStr.replace(mathElem.Id, mathElem.Value)
+    for(let i = str.length; i > 0; i --){
+        const tokenStr = str.substring(0, i);
+         if(!isNaN(+tokenStr)){
+            return Token.u
         }
-        return finalStr;
+        const t: Token | undefined = (<any>Token)[tokenStr];
+        if(t !== undefined){
+            return t
+        }
     }
-
-    private RecreateLinks(mdString:string): string{
-        const links = this.Links.toDict();
-        let recreated = mdString;
-        const openLinkindices: Array<number> = FindIndiced(mdString, '[[');
-        const closeLinkindices: Array<number> = FindIndiced(mdString, ']]');
-        const linkElements: Array<MarkdownElement> = GetElements(openLinkindices, closeLinkindices);
-        for(let elem of linkElements){
-            const currentLink:string = mdString.substring(elem.Start + 2, elem.Finish);
-            recreated = recreated.replace(`[[${currentLink}]]`, `[${currentLink}](${links[currentLink]})`); 
-        }
-        return recreated;       
-    }
-
-    private GetMath(mdString: string): string {
-        let mathless: string = mdString;
-        console.log(mdString);
-        const mathDisplayIndeces: Array<number> = FindIndiced(mdString, '$$');
-        const startDisplayIndices: Array<number> = mathDisplayIndeces.filter((_, i) => {return i%2 == 0});
-        const finishDisplayIndices: Array<number> = mathDisplayIndeces.filter((_, i) => {return i%2 == 1});
-        console.log(startDisplayIndices, finishDisplayIndices, mathDisplayIndeces);
-        const displayElements: Array<MarkdownElement> = GetElements(startDisplayIndices, finishDisplayIndices);
-        let mathElements: Array<MathElement> = []
-        for(let elem of displayElements){
-            const id: string = randomUUID();
-            const currentMath:string = mdString.substring(elem.Start + 2, elem.Finish);
-            mathless = mathless.replace(`$$${currentMath}$$`, id);
-            mathElements.push(new MathElement(currentMath, id, true));
-        }
-        const mathInlineIndeces: Array<number> = FindIndiced(mathless, '$');
-        const startInlineIndices: Array<number> = mathInlineIndeces.filter((_, i) => {return i%2 == 0});
-        const finishInlineIndices: Array<number> = mathInlineIndeces.filter((_, i) => {return i%2 == 1});
-        console.log(startInlineIndices, finishInlineIndices);
-        let InlineElements: Array<MarkdownElement> = GetElements(startInlineIndices, finishInlineIndices);
-        for(let elem of InlineElements){
-            const id: string = randomUUID();
-            const currentMath:string = mdString.substring(elem.Start + 1, elem.Finish);
-            mathless = mathless.replace(`$${currentMath}$`, id);
-            mathElements.push(new MathElement(currentMath, id, false));
-        }
-        this.MathElements = mathElements;
-        return mathless;
-    } 
-
-    
+    return Token.u;
 }
 
+function Tokenize(mdString: string): Array<MarkdownToken>{
+    const steps: Array<number> = [...new Set(Object.keys(Token).map(v => v.length))];
+    const maxStep: number = Math.max(...steps);
+    let match: Array<MarkdownToken> = [];
+    let i = 0;
+    while(i <=mdString.length){
+        const str: string = mdString.substring(i, Math.min(i+maxStep, mdString.length));
+        const token: Token = ToToken(str);
+        if(token != Token.u){
+            match.push(new MarkdownToken(token, i));
+            i += Token[token].length - 1;
+        }
+        i++;
+    }
+    return match;
+}
+
+const Opener = [Token['[['], Token.$, Token.$$, Token['```'], Token['```mermaid']]
 
 
-export { Parser };
+function BuildElements(tokens: Array<MarkdownToken>, mdString:string): Array<MarkdownElement>{
+    const opened: { [id: string] : MarkdownToken|undefined; } = {};
+    let elements: Array<MarkdownElement> = [];
+
+    for(let t of Opener){
+        opened[t.toString()] = undefined;
+    }
+    for(let i = 0; i < tokens.length; i++){
+        const t = Token[tokens[i].Value];
+        switch(t){
+            case '[[':
+                if(opened[t] !== undefined){
+                    throw new Error(`Wrong markdown file format: unexpected token ${t}`);
+                }
+                opened[t] = tokens[i];
+            break;
+            case ']]':
+                if(opened['[['] === undefined){
+                    throw new Error(`Wrong markdown file format: unexpected token ${t}`);
+                }
+                const str = mdString.substring((<MarkdownToken>opened['[[']).Position + 2, tokens[i].Position);
+                elements.push(new MarkdownElement((<MarkdownToken>opened['[[']).Position, tokens[i].Position, str, Token['[[']));
+                opened[t] = undefined;
+            break;
+            case '$$':
+                if(opened[t] !== undefined){
+                    const str = mdString.substring((<MarkdownToken>opened['$$']).Position + 2, tokens[i].Position);
+                    elements.push(new MarkdownElement((<MarkdownToken>opened[t]).Position, tokens[i].Position, str, Token.$$));
+                }else{
+                    opened[t] = tokens[i];
+                }
+            break;
+            case '$':
+                if(opened[t] !== undefined){
+                    const str = mdString.substring((<MarkdownToken>opened['$']).Position + 1, tokens[i].Position);
+                    elements.push(new MarkdownElement((<MarkdownToken>opened[t]).Position, tokens[i].Position, str, Token.$));
+
+                }else{
+                    opened[t] = tokens[i];
+                }
+            break;
+            case '```mermaid':
+                if(opened[t] !== undefined){
+                    throw new Error(`Wrong markdown file format: unexpected token ${t}`);
+                }
+                opened[t] = tokens[i];
+            break;
+            case '```':
+                if(opened[t] === undefined && opened[Token['```mermaid'].toString()] === undefined){
+                    opened[t] = tokens[i];
+                }else if(opened[t] === undefined){
+                    const str = mdString.substring((<MarkdownToken>opened['```mermaid']).Position + 10, tokens[i].Position);
+                    elements.push(new MarkdownElement((<MarkdownToken>opened[Token['```mermaid']]).Position, tokens[i].Position, str, Token['```mermaid']));
+                    opened[Token['```mermaid']] = undefined;
+                }else if(opened[Token['```mermaid'].toString()] === undefined){
+                    const str = mdString.substring((<MarkdownToken>opened['```']).Position + 3, tokens[i].Position);
+                    elements.push(new MarkdownElement((<MarkdownToken>opened[t]).Position, tokens[i].Position, str, Token['```']));
+                    opened[Token['```']] = undefined;
+                }
+            break;
+            default:
+                throw new Error(`invalid token ${t}`);
+        }
+    }
+    return elements;
+
+}
+
+export { Tokenize, BuildElements };
