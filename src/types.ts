@@ -1,6 +1,6 @@
 import { marked } from 'marked';
 const katex = require('katex');
-
+ 
 interface Element{
     Value:string;
     Id:string;
@@ -16,7 +16,8 @@ class MathElement implements Element{
             {
                 "displayMode":display,
                 "output":"htmlAndMathml",
-            });
+                "throwOnError": false
+            }).replace('aria-hidden="true"','aria-hidden="true" hidden');
         this.Id = id;
     }
 }
@@ -27,6 +28,17 @@ class LinkElement implements Element{
 
     constructor(value: string, id: string, link:string){
         this.Value = marked.parse(`[${value}](${link})`).replace('<p>','').replace('<\\p>','');
+        this.Id = id;
+    }
+
+}
+
+class VisualLinkElement implements Element{
+    public Value: string;
+    public Id: string;
+
+    constructor(value: string, id: string, link:string){
+        this.Value = marked.parse(`![${value}](${link})`).replace('<p>','').replace('<\\p>','');
         this.Id = id;
     }
 
@@ -48,6 +60,7 @@ enum Token{
     '$$',
     '$',
     '[[',
+    '![[',
     ']]',
     '```mermaid',
     '```',
@@ -83,4 +96,4 @@ class Edge{
     }
 }
 
-export { MathElement, Element, LinkElement, MermaidElement, Token, MarkdownToken, MarkdownElement, Edge }
+export { MathElement, Element, LinkElement, VisualLinkElement, MermaidElement, Token, MarkdownToken, MarkdownElement, Edge }

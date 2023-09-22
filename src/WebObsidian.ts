@@ -1,6 +1,6 @@
 import { ObsidianlinkArray } from './links';
 import {  Graph } from './graph';
-import { MarkdownElement, MathElement, Element, LinkElement, Token, MermaidElement} from './types';
+import { MarkdownElement, MathElement, Element, LinkElement, Token, MermaidElement, VisualLinkElement} from './types';
 import { Tokenize, BuildElements } from './Parser';
 import { randomUUID } from "crypto";
 import { marked } from 'marked';
@@ -10,14 +10,16 @@ class WebObsidian{
     
     Links:ObsidianlinkArray;
     LinksDict: {[id:string]: string};
+    NotInGraphLinksDict: {[id:string]: string};
     AdiacentMatrix:number[][];
     NoteNames:Array<string>;
 
     private Elements: Array<Element> = [];
 
-    constructor(links:ObsidianlinkArray){
+    constructor(links:ObsidianlinkArray, notInGraphLinks:ObsidianlinkArray| undefined = undefined){
         this.Links = links;
         this.LinksDict = links.toDict();
+        this.NotInGraphLinksDict = notInGraphLinks !== undefined ? notInGraphLinks.toDict(): {};
         this.AdiacentMatrix = [];
         const len = this.Links.length;
         for(let i: number = 0; i < len; i++) {
@@ -63,6 +65,7 @@ class WebObsidian{
                 case Token[Token.$]:
                     noteText = this.ConvertInlineMathElement(element, noteText);
                 break;
+                case Token[Token['![[']]:
                 case Token[Token['[[']]:
                     if(convertOnly){
                         noteText = this.ConvertLinksElement(element, noteText);
@@ -101,9 +104,26 @@ class WebObsidian{
 
     private ConvertLinksElement(element:MarkdownElement, mdString:string):string {
         const id: string = randomUUID();
-        const currentLink:string = element.Value;
-        this.Elements.push(new LinkElement(currentLink, id, this.LinksDict[currentLink] + ".html"));
-        return mdString.replace(`[[${currentLink}]]`, id); 
+        let currentLink:string = element.Value;
+        let reference: string = element.Value;
+        const split = element.Value.split("|");
+        if(split.length > 1){
+            currentLink = split[1]
+            reference = split[0]
+        }
+        let link = this.LinksDict[reference];
+        if(link === undefined){
+            link = this.NotInGraphLinksDict[reference];
+            if(link === undefined){
+                link = reference;
+            }
+        }
+        if(element.Type === Token['[[']){
+            this.Elements.push(new LinkElement(currentLink, id, link));
+            return mdString.replace(`[[${element.Value}]]`, id); 
+        }
+        this.Elements.push(new VisualLinkElement(currentLink, id, link));
+        return mdString.replace(`![[${element.Value}]]`, id); 
     }
 
     private ConvertMermaidElement(element:MarkdownElement, mdString:string):string{
@@ -116,7 +136,9 @@ class WebObsidian{
     private BuildGraphAndConvert = (element:MarkdownElement, mdString:string, from:number) => {
         const currentLink:string = element.Value;
         const to = this.NoteNames.indexOf(currentLink);
-        this.AdiacentMatrix[from][to] = 1;
+        if(to >= 0){
+            this.AdiacentMatrix[from][to] = 1;
+        }
         return this.ConvertLinksElement(element, mdString);
     }
 }
