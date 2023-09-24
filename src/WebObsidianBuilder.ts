@@ -1,18 +1,21 @@
-import { ObsidianlinkArray } from './links';
-import {  Graph } from './graph';
-import { MarkdownElement, MathElement, Element, LinkElement, Token, MermaidElement, VisualLinkElement} from './types';
+import { ObsidianlinkArray } from './Links';
+import {  Graph } from './Graph';
+import { MarkdownElement, MathElement, Element, LinkElement, MermaidElement, VisualLinkElement, MathClass} from './ObsidianElements';
+import { Token } from './Tokens';
 import { Tokenize, BuildElements } from './Parser';
 import { randomUUID } from "crypto";
 import { marked } from 'marked';
 
 
-class WebObsidian{
+class WebObsidianBuilder{
     
-    Links:ObsidianlinkArray;
-    LinksDict: {[id:string]: string};
-    NotInGraphLinksDict: {[id:string]: string};
-    AdiacentMatrix:number[][];
-    NoteNames:Array<string>;
+    private Links:ObsidianlinkArray;
+    private LinksDict: {[id:string]: string};
+    private NotInGraphLinksDict: {[id:string]: string};
+    private AdiacentMatrix:number[][];
+    private NoteNames:Array<string>;
+
+    private Mathcss: boolean = false;
 
     private Elements: Array<Element> = [];
 
@@ -24,9 +27,8 @@ class WebObsidian{
         const len = this.Links.length;
         for(let i: number = 0; i < len; i++) {
             this.AdiacentMatrix[i] = [];
-            for(let j: number = 0; j< len; j++) {
+            for(let j: number = 0; j< len; j++) 
                 this.AdiacentMatrix[i][j] = 0;
-            }
         }
         this.NoteNames = links.GetNames();
     }
@@ -52,18 +54,29 @@ class WebObsidian{
         return new Graph(this.NoteNames, this.AdiacentMatrix);       
     }
 
+    GetCss():string{
+        let css = "";
+        if(this.Mathcss){
+            css += `.${MathClass}{
+visibility: hidden;
+}`;
+        }
+        return css;
+    }
+
     private RemoveElementAndConvert(noteText:string, elements:Array<MarkdownElement>, noteIndex:number|undefined = undefined){
         const convertOnly: boolean = noteIndex === undefined;
         for(let element of elements){
-            if(element.Type === Token.u){
+            if(element.Type === Token.u)
                 throw new Error("undefined element found");
-            }
             switch(Token[element.Type]){
                 case Token[Token.$$]:
                     noteText = this.ConvertDisplayMathElement(element, noteText);
+                    this.Mathcss = true;
                 break;
                 case Token[Token.$]:
                     noteText = this.ConvertInlineMathElement(element, noteText);
+                    this.Mathcss = true;
                 break;
                 case Token[Token['![[']]:
                 case Token[Token['[[']]:
@@ -82,9 +95,8 @@ class WebObsidian{
     }
 
     private Rebuild(noteText:string): string{
-        for(let elem of this.Elements){
+        for(let elem of this.Elements)
             noteText = noteText.replace(elem.Id,elem.Value);
-        }
         return noteText;
     }
 
@@ -114,9 +126,8 @@ class WebObsidian{
         let link = this.LinksDict[reference];
         if(link === undefined){
             link = this.NotInGraphLinksDict[reference];
-            if(link === undefined){
+            if(link === undefined)
                 link = reference;
-            }
         }
         if(element.Type === Token['[[']){
             this.Elements.push(new LinkElement(currentLink, id, link));
@@ -136,13 +147,12 @@ class WebObsidian{
     private BuildGraphAndConvert = (element:MarkdownElement, mdString:string, from:number) => {
         const currentLink:string = element.Value;
         const to = this.NoteNames.indexOf(currentLink);
-        if(to >= 0){
+        if(to >= 0)
             this.AdiacentMatrix[from][to] = 1;
-        }
         return this.ConvertLinksElement(element, mdString);
     }
 }
 
 
-export { WebObsidian };
+export { WebObsidianBuilder };
 

@@ -1,18 +1,15 @@
-import { open } from 'fs';
-import { MarkdownElement, Token, MarkdownToken } from './types';
-
+import { MarkdownElement } from './ObsidianElements';
+import { Token, MarkdownToken} from './Tokens';
 
 function ToToken(str:string): Token{
 
     for(let i = str.length; i > 0; i --){
         const tokenStr = str.substring(0, i);
-         if(!isNaN(+tokenStr)){
+         if(!isNaN(+tokenStr))
             return Token.u
-        }
         const t: Token | undefined = (<any>Token)[tokenStr];
-        if(t !== undefined){
+        if(t !== undefined)
             return t
-        }
     }
     return Token.u;
 }
@@ -22,7 +19,7 @@ function Tokenize(mdString: string): Array<MarkdownToken>{
     const maxStep: number = Math.max(...steps);
     let match: Array<MarkdownToken> = [];
     let i = 0;
-    while(i <=mdString.length){
+    while(i <= mdString.length){
         const str: string = mdString.substring(i, Math.min(i+maxStep, mdString.length));
         const token: Token = ToToken(str);
         if(token != Token.u){
@@ -34,75 +31,73 @@ function Tokenize(mdString: string): Array<MarkdownToken>{
     return match;
 }
 
-const Opener = [Token['[['], Token.$, Token.$$, Token['```'], Token['```mermaid']]
+const Closer = [Token[']]'], Token.$, Token.$$, Token['```']]
 
 
 function BuildElements(tokens: Array<MarkdownToken>, mdString:string): Array<MarkdownElement>{
     const opened: { [id: string] : MarkdownToken|undefined; } = {};
     let elements: Array<MarkdownElement> = [];
-
-    for(let t of Opener){
+    tokens.sort((a:MarkdownToken, b:MarkdownToken) => {
+        return a.Position > b.Position ? 1:-1;
+    });
+    for(let t of Closer){
         opened[t.toString()] = undefined;
     }
     for(let i = 0; i < tokens.length; i++){
         const t = Token[tokens[i].Value];
+        const token = (<MarkdownToken>opened[t]);
+        let str: string = "";
         switch(t){
+            case '![[':
             case '[[':
-                if(opened[t] !== undefined){
+                if(opened[']]'] !== undefined)
                     throw new Error(`Wrong markdown file format: unexpected token ${t}`);
-                }
-                opened[t] = tokens[i];
+                opened[']]'] = tokens[i];
             break;
             case ']]':
-                if(opened['[['] === undefined){
+                if(opened[t] === undefined)
                     throw new Error(`Wrong markdown file format: unexpected token ${t}`);
-                }
-                const str = mdString.substring((<MarkdownToken>opened['[[']).Position + 2, tokens[i].Position);
-                elements.push(new MarkdownElement(str, Token['[[']));
+                str = mdString.substring(token.Position + Token[token.Value].length, tokens[i].Position);
+                elements.push(new MarkdownElement(str, token.Value));
                 opened[t] = undefined;
             break;
             case '$$':
-                if(opened[t] !== undefined){
-                    const str = mdString.substring((<MarkdownToken>opened['$$']).Position + 2, tokens[i].Position);
-                    elements.push(new MarkdownElement(str, Token.$$));
-                }else{
-                    opened[t] = tokens[i];
+                if(opened[t] === undefined){
+                    opened[t] = tokens[i]
+                    break;
                 }
+                str = mdString.substring((<MarkdownToken>opened['$$']).Position + 2, tokens[i].Position);
+                elements.push(new MarkdownElement(str, Token.$$));
+                opened[t] = undefined;
             break;
             case '$':
-                if(opened[t] !== undefined){
-                    const str = mdString.substring((<MarkdownToken>opened['$']).Position + 1, tokens[i].Position);
-                    elements.push(new MarkdownElement(str, Token.$));
-
-                }else{
+                if(opened[t] === undefined){
                     opened[t] = tokens[i];
+                    break;
                 }
+                str = mdString.substring((<MarkdownToken>opened['$']).Position + 1, tokens[i].Position);
+                elements.push(new MarkdownElement(str, Token.$));
+                opened[t] = undefined;
             break;
             case '```mermaid':
-                if(opened[t] !== undefined){
+                if(opened['```'] !== undefined)
                     throw new Error(`Wrong markdown file format: unexpected token ${t}`);
-                }
-                opened[t] = tokens[i];
+                opened['```'] = tokens[i];
             break;
             case '```':
-                if(opened[t] === undefined && opened['```mermaid'] === undefined){
+                if(opened[t] === undefined){
                     opened[t] = tokens[i];
-                }else if(opened[t] === undefined){
-                    const str = mdString.substring((<MarkdownToken>opened['```mermaid']).Position + 10, tokens[i].Position);
-                    elements.push(new MarkdownElement(str, Token['```mermaid']));
-                    opened[Token['```mermaid']] = undefined;
-                }else if(opened['```mermaid'] === undefined){
-                    const str = mdString.substring((<MarkdownToken>opened[t]).Position + 3, tokens[i].Position);
-                    elements.push(new MarkdownElement(str, Token['```']));
-                    opened[t] = undefined;
+                    break;
                 }
+                str = mdString.substring(token.Position + Token[token.Value].length, tokens[i].Position);
+                elements.push(new MarkdownElement(str, (<MarkdownToken>opened[t]).Value));
+                opened[t] = undefined;
             break;
             default:
                 throw new Error(`invalid token ${t}`);
         }
     }
     return elements;
-
 }
 
 export { Tokenize, BuildElements };

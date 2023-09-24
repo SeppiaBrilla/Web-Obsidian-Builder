@@ -1,5 +1,3 @@
-import { Edge } from './types'
-
 class Graph {
     public Nodes: Array<string> = []
     public Edges: Array<Edge> = []
@@ -23,22 +21,28 @@ class Graph {
 
     public GetEdgesFrom(node:string): Array<Edge>{
         let edges: Array<Edge> = [];
-        for(let e of this.Edges){
-            if(e.From == node){
+        for(let e of this.Edges)
+            if(e.From == node)
                 edges.push(e)
-            }
-        }
         return edges;
     }
 
     public GetEdgesTo(node:string): Array<Edge>{
         let edges: Array<Edge> = [];
-        for(let e of this.Edges){
-            if(e.To == node){
+        for(let e of this.Edges)
+            if(e.To == node)
                 edges.push(e)
-            }
-        }
         return edges;
+    }
+}
+
+class Edge{
+    public From:string;
+    public To:string;
+
+    constructor(from:string, to:string){
+        this.From = from;
+        this.To = to;
     }
 }
 

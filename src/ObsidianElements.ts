@@ -1,10 +1,13 @@
 import { marked } from 'marked';
+import { Token } from './Tokens';
 const katex = require('katex');
  
 interface Element{
     Value:string;
     Id:string;
 }
+
+const MathClass = "WebObsidianMath InlineMath";
 
 class MathElement implements Element{
     public Value: string;
@@ -17,7 +20,9 @@ class MathElement implements Element{
                 "displayMode":display,
                 "output":"htmlAndMathml",
                 "throwOnError": false
-            }).replace('aria-hidden="true"','aria-hidden="true" hidden');
+            }).replace('aria-hidden="true"',`aria-hidden="true" class:"${MathClass}"`);
+        if(!display)
+            this.Value = this.Value.replace('display="block"','');
         this.Id = id;
     }
 }
@@ -27,7 +32,7 @@ class LinkElement implements Element{
     public Id: string;
 
     constructor(value: string, id: string, link:string){
-        this.Value = marked.parse(`[${value}](${link})`).replace('<p>','').replace('<\\p>','');
+        this.Value = marked.parse(`[${value}](${link})`).replace('<p>','').replace('</p>','');
         this.Id = id;
     }
 
@@ -38,7 +43,7 @@ class VisualLinkElement implements Element{
     public Id: string;
 
     constructor(value: string, id: string, link:string){
-        this.Value = marked.parse(`![${value}](${link})`).replace('<p>','').replace('<\\p>','');
+        this.Value = marked.parse(`![${value}](${link})`).replace('<p>','').replace('</p>','');
         this.Id = id;
     }
 
@@ -56,25 +61,7 @@ ${value}
     }
 }
 
-enum Token{
-    '$$',
-    '$',
-    '[[',
-    '![[',
-    ']]',
-    '```mermaid',
-    '```',
-    'u'
-}
 
-class MarkdownToken{
-    public Value: Token;
-    public Position:number;
-    constructor(value:Token, position:number){
-        this.Value = value;
-        this.Position = position;
-    }
-}
 
 class MarkdownElement{
     public Value: string;
@@ -86,14 +73,6 @@ class MarkdownElement{
     };
 }
 
-class Edge{
-    public From:string;
-    public To:string;
 
-    constructor(from:string, to:string){
-        this.From = from;
-        this.To = to;
-    }
-}
 
-export { MathElement, Element, LinkElement, VisualLinkElement, MermaidElement, Token, MarkdownToken, MarkdownElement, Edge }
+export { MathElement, Element, LinkElement, VisualLinkElement, MermaidElement, MarkdownElement, MathClass}
