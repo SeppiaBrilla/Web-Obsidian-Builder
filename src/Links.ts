@@ -18,8 +18,8 @@ class ObsidianlinkArray extends Array<ObsidianLink>{
     }
 
     toDict(): Record<string, string>{
-        let rec: Record<string,string> = {}
-        for(let element of this.Links)
+        const rec: Record<string,string> = {}
+        for(const element of this.Links)
             rec[element.OriginalName] = element.Link;
         return rec;
     }

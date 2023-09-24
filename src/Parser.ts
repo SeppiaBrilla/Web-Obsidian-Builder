@@ -7,7 +7,9 @@ function ToToken(str:string): Token{
         const tokenStr = str.substring(0, i);
          if(!isNaN(+tokenStr))
             return Token.u
+        /* eslint-disable */
         const t: Token | undefined = (<any>Token)[tokenStr];
+        /* eslint-enable */
         if(t !== undefined)
             return t
     }
@@ -17,7 +19,7 @@ function ToToken(str:string): Token{
 function Tokenize(mdString: string): Array<MarkdownToken>{
     const steps: Array<number> = [...new Set(Object.keys(Token).map(v => v.length))];
     const maxStep: number = Math.max(...steps);
-    let match: Array<MarkdownToken> = [];
+    const match: Array<MarkdownToken> = [];
     let i = 0;
     while(i <= mdString.length){
         const str: string = mdString.substring(i, Math.min(i+maxStep, mdString.length));
@@ -36,11 +38,11 @@ const Closer = [Token[']]'], Token.$, Token.$$, Token['```']]
 
 function BuildElements(tokens: Array<MarkdownToken>, mdString:string): Array<MarkdownElement>{
     const opened: { [id: string] : MarkdownToken|undefined; } = {};
-    let elements: Array<MarkdownElement> = [];
+    const elements: Array<MarkdownElement> = [];
     tokens.sort((a:MarkdownToken, b:MarkdownToken) => {
         return a.Position > b.Position ? 1:-1;
     });
-    for(let t of Closer){
+    for(const t of Closer){
         opened[t.toString()] = undefined;
     }
     for(let i = 0; i < tokens.length; i++){

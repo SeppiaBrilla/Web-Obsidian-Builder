@@ -1,6 +1,6 @@
 import { marked } from 'marked';
 import { Token } from './Tokens';
-const katex = require('katex');
+import * as katex  from 'katex';
  
 interface Element{
     Value:string;
@@ -70,7 +70,7 @@ class MarkdownElement{
     constructor(value:string, type:Token){
         this.Value = value;
         this.Type = type;
-    };
+    }
 }
 
 

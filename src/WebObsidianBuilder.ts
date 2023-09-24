@@ -66,7 +66,7 @@ visibility: hidden;
 
     private RemoveElementAndConvert(noteText:string, elements:Array<MarkdownElement>, noteIndex:number|undefined = undefined){
         const convertOnly: boolean = noteIndex === undefined;
-        for(let element of elements){
+        for(const element of elements){
             if(element.Type === Token.u)
                 throw new Error("undefined element found");
             switch(Token[element.Type]){
@@ -95,7 +95,7 @@ visibility: hidden;
     }
 
     private Rebuild(noteText:string): string{
-        for(let elem of this.Elements)
+        for(const elem of this.Elements)
             noteText = noteText.replace(elem.Id,elem.Value);
         return noteText;
     }

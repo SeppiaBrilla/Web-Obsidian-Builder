@@ -6,7 +6,7 @@ class Graph {
         this.Edges = this.ConvertEdges(adiacentMatrix);
     }
     private ConvertEdges(adiacentMatrix:number[][]): Array<Edge>{
-        let edges: Array<Edge> = []
+        const edges: Array<Edge> = []
 
         const size = adiacentMatrix.length;
         for(let i = 0; i < size; i++){
@@ -20,16 +20,16 @@ class Graph {
     }
 
     public GetEdgesFrom(node:string): Array<Edge>{
-        let edges: Array<Edge> = [];
-        for(let e of this.Edges)
+        const edges: Array<Edge> = [];
+        for(const e of this.Edges)
             if(e.From == node)
                 edges.push(e)
         return edges;
     }
 
     public GetEdgesTo(node:string): Array<Edge>{
-        let edges: Array<Edge> = [];
-        for(let e of this.Edges)
+        const edges: Array<Edge> = [];
+        for(const e of this.Edges)
             if(e.To == node)
                 edges.push(e)
         return edges;
