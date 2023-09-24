@@ -1,4 +1,14 @@
 {
+  "name": "WebObsidianBuilder",
+  "version": "0.1.0",
+  "description": "A typescript library to transform Obsidian notes into html",
+  "main": "index.js",
+  "types": "dist/index.d.ts",
+  "author": "SeppiaBrilla <alessio.pellegrino@gmail.com>",
+  "keywords": [
+    "Obsidian",
+    "Markdown"
+  ],
   "dependencies": {
     "@types/marked": "^5.0.1",
     "katex": "^0.16.8",
@@ -7,9 +17,14 @@
   "scripts": {
     "build": "tsc --build",
     "clean": "tsc  --build --clean",
+    "test": "jest",
     "run": "tsc --build && node dist/main.js"
   },
   "devDependencies": {
-    "@types/node": "^20.6.2"
+    "@types/jest": "^29.5.5",
+    "@types/node": "^20.6.2",
+    "jest": "^29.7.0",
+    "ts-jest": "^29.1.1",
+    "typescript": "^5.2.2"
   }
 }
