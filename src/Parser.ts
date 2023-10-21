@@ -22,6 +22,8 @@ function Tokenize(mdString: string): Array<MarkdownToken>{
     const match: Array<MarkdownToken> = [];
     let i = 0;
     while(i <= mdString.length){
+        if(mdString[i] === '\\')
+            i += 2;
         const str: string = mdString.substring(i, Math.min(i+maxStep, mdString.length));
         const token: Token = ToToken(str);
         if(token != Token.u){

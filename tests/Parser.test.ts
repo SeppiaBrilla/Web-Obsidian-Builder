@@ -84,6 +84,17 @@ describe('Tokenize', () => {
         expect(tokens[7].Value).toEqual(Token['```']);
         expect(tokens[7].Position).toEqual(39);
     });
+
+    test('escape sequence', () => {
+        const mdStr = '$123 \\$ \\$ 123$';
+        const tokens = Tokenize(mdStr);
+
+        expect(tokens.length).toEqual(2);
+        expect(tokens[0].Value).toEqual(Token['$']);
+        expect(tokens[0].Position).toEqual(0);
+        expect(tokens[1].Value).toEqual(Token['$']);
+        expect(tokens[1].Position).toEqual(14);
+    });
 });
 
 const mdString = '$$math$$ [[link]] ```mermaid m ``` $inline$ $$double math$$ ```py code ``` ![[image]]';
