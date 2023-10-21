@@ -9,9 +9,9 @@ This library uses [katex](https://katex.org/) to convert math and [marked](https
 ## Install
 
 To install this package you can simply type:
-'''
+```
 npm i web-obsidian-builder
-'''
+```
 
 ## Usage
 
