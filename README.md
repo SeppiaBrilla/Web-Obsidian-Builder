@@ -34,6 +34,3 @@ As now, the library supports: normal obsidian note links, display math elements,
 
 \* To support mermaid elements you need to add the [mermaid cdn](https://cdnjs.com/libraries/mermaid) to your html. 
 
-## Known issues
-
-As for now, the library does not support escaping within the supported elemets and can throw error if it encounter one.
