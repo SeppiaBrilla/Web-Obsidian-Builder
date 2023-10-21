@@ -1,5 +1,5 @@
 {
-  "name": "WebObsidianBuilder",
+  "name": "web-obsidian-builder",
   "version": "0.1.0",
   "description": "A typescript library to transform Obsidian notes into html",
   "main": "lib/cjs/index.js",
