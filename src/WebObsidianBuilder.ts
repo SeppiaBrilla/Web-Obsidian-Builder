@@ -58,7 +58,7 @@ class WebObsidianBuilder{
         let css = "";
         if(this.Mathcss){
             css += `.${MathClass}{
-visibility: hidden;
+    display: none;
 }`;
         }
         return css;
@@ -110,7 +110,7 @@ visibility: hidden;
     private ConvertInlineMathElement(element:MarkdownElement, mdString:string): string{
         const id: string = randomUUID();
         const currentMath:string = element.Value;
-        this.Elements.push(new MathElement(currentMath, id, true));
+        this.Elements.push(new MathElement(currentMath, id, false));
         return mdString.replace(`$${currentMath}$`, id);
     }
 

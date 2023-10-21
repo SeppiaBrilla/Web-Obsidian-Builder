@@ -7,7 +7,7 @@ interface Element{
     Id:string;
 }
 
-const MathClass = "WebObsidianMath InlineMath";
+const MathClass = "ObsidianMath";
 
 class MathElement implements Element{
     public Value: string;
@@ -20,9 +20,9 @@ class MathElement implements Element{
                 "displayMode":display,
                 "output":"htmlAndMathml",
                 "throwOnError": false
-            }).replace('aria-hidden="true"',`aria-hidden="true" class:"${MathClass}"`);
+            }).replace('class="katex-html" aria-hidden="true"',`class="katex-html ${MathClass}" aria-hidden="true"`);
         if(!display)
-            this.Value = this.Value.replace('display="block"','');
+            this.Value = this.Value.replaceAll('display="block"','');
         this.Id = id;
     }
 }

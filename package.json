@@ -2,8 +2,8 @@
   "name": "WebObsidianBuilder",
   "version": "0.1.0",
   "description": "A typescript library to transform Obsidian notes into html",
-  "main": "index.js",
-  "types": "dist/index.d.ts",
+  "main": "lib/cjs/index.js",
+  "module": "lib/esm/index.js",
   "author": "SeppiaBrilla <alessio.pellegrino@gmail.com>",
   "keywords": [
     "Obsidian",
@@ -15,10 +15,11 @@
     "marked": "^9.0.1"
   },
   "scripts": {
-    "build": "tsc --build",
+    "build": "tsc --project tsconfig.json && tsc --project tsconfig-cjs.json",
     "clean": "tsc  --build --clean",
     "test": "jest",
-    "check": "npx eslint src/"
+    "check": "npx eslint src/",
+    "prepublishOnly": "npm run build"
   },
   "devDependencies": {
     "@types/jest": "^29.5.5",

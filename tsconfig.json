@@ -1,16 +1,18 @@
 {
   "compilerOptions": {
-    "target": "es2016",
-    "module": "commonjs",
+    "target": "ES2016",
+    "module": "ES2020",
     "forceConsistentCasingInFileNames": true,
     "strict": true,
+    "declaration":true,
     "skipLibCheck": true,
-    "outDir":"dist/",
+    "esModuleInterop":true,
+    "outDir":"./lib/esm",
     "lib": [
         "ES2021.String"
     ]
   }, 
   "include": [
-    "src/"
+    "./src"
   ]
 }

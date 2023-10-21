@@ -3,3 +3,7 @@ tests/
 .git
 jest.config.js
 node_modules/
+.github
+tsconfig-cjs.json
+.npmignore
+.eslintrc.cjs
