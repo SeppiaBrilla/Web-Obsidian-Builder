@@ -2,7 +2,7 @@ import { ObsidianlinkArray } from './Links';
 import {  Graph } from './Graph';
 import { MarkdownElement, MathElement, Element, LinkElement, MermaidElement, VisualLinkElement, MathClass} from './ObsidianElements';
 import { Token } from './Tokens';
-import { Tokenize, BuildElements } from './Parser';
+import { BuildElements } from './Parser';
 import { randomUUID } from "crypto";
 import { marked } from 'marked';
 
@@ -35,16 +35,14 @@ class WebObsidianBuilder{
 
     AddAndConvert(noteName:string, noteText:string){
         const from = this.NoteNames.indexOf(noteName);
-        const tokens = Tokenize(noteText);
-        const elements = BuildElements(tokens, noteText);
+        const elements = BuildElements(noteText);
         
         noteText = this.RemoveElementAndConvert(noteText, elements, from);
         return this.Rebuild(noteText);
     }
 
     Convert(noteText:string){
-        const tokens = Tokenize(noteText);
-        const elements = BuildElements(tokens, noteText);
+        const elements = BuildElements(noteText);
         
         noteText = this.RemoveElementAndConvert(noteText, elements);
         return this.Rebuild(noteText);
