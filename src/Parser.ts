@@ -1,7 +1,7 @@
 import { MarkdownElement } from './ObsidianElements';
 import { Token, MarkdownToken} from './Tokens';
 
-const REGEX = "([a-zA-Z0-9 \\^\\/,\\.\\*\\!\\@\\#\\%\\^\\&()\\{}_\\-=\\+`~;:'\"<>\\?\\|\\n\\t]+)";
+const REGEX = "([a-zA-Z0-9 \\^\\/,\\.\\*\\!\\@\\#\\%\\^\\&()\\{}_\\-=\\+`~;:'\"<>\\?\\|\\\\n\\t]+)";
 const CHAR_TO_ESCAPE = ['\\','.','$','*','+','?','(',')','[','{,','|', ']', '-']
 
 function addEscape(str:string){

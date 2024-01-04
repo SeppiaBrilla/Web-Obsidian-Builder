@@ -97,7 +97,7 @@ describe('Tokenize', () => {
     });
 });
 
-const mdString = '$$math$$ [[link]] ```mermaid m ``` $inline$ $$double math$$ ```py code ``` ![[image]]';
+const mdString = '$$math$$ [[link]] ```mermaid m ``` $\\phi$ $$double math$$ ```py code ``` ![[image]]';
 
 describe('BuildElements', () => {
     test('find elements', () =>{
@@ -116,7 +116,7 @@ describe('BuildElements', () => {
         expect(elements[3].Value).toEqual("double math");
         expect(elements[3].Type).toEqual(Token.$$);
 
-        expect(elements[4].Value).toEqual("inline");
+        expect(elements[4].Value).toEqual("\\phi");
         expect(elements[4].Type).toEqual(Token.$);
 
         expect(elements[5].Value).toEqual(" m ");
