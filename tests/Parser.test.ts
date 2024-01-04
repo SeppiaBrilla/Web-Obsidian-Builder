@@ -1,4 +1,4 @@
-import { Tokenize, BuildElements } from '../src/Parser';
+import { Tokenize, BuildElements} from '../src/Parser';
 import { MarkdownToken, Token } from '../src/Tokens';
 
 describe('Tokenize', () => {
@@ -98,47 +98,32 @@ describe('Tokenize', () => {
 });
 
 const mdString = '$$math$$ [[link]] ```mermaid m ``` $inline$ $$double math$$ ```py code ``` ![[image]]';
-const tokens = [
-        new MarkdownToken( 0, 0),
-        new MarkdownToken( 0, 6),
-        new MarkdownToken( 2, 9),
-        new MarkdownToken( 4, 15),
-        new MarkdownToken( 5, 18),
-        new MarkdownToken( 6, 31),
-        new MarkdownToken( 1, 35),
-        new MarkdownToken( 1, 42),
-        new MarkdownToken( 0, 44),
-        new MarkdownToken( 0, 57),
-        new MarkdownToken( 6, 60),
-        new MarkdownToken( 6, 71),
-        new MarkdownToken( 3, 75),
-        new MarkdownToken( 4, 83)
-      ]
 
 describe('BuildElements', () => {
     test('find elements', () =>{
-        const elements = BuildElements(tokens, mdString);
+        const elements = BuildElements(mdString);
 
         expect(elements.length).toEqual(7);
-        expect(elements[0].Value).toEqual("math");
-        expect(elements[0].Type).toEqual(Token.$$);
+        expect(elements[0].Value).toEqual("image");
+        expect(elements[0].Type).toEqual(Token['![[']);
 
         expect(elements[1].Value).toEqual("link");
         expect(elements[1].Type).toEqual(Token['[[']);
 
-        expect(elements[2].Value).toEqual(" m ");
-        expect(elements[2].Type).toEqual(Token['```mermaid']);
+        expect(elements[2].Value).toEqual("math");
+        expect(elements[2].Type).toEqual(Token.$$);
 
-        expect(elements[3].Value).toEqual("inline");
-        expect(elements[3].Type).toEqual(Token.$);
+        expect(elements[3].Value).toEqual("double math");
+        expect(elements[3].Type).toEqual(Token.$$);
 
-        expect(elements[4].Value).toEqual("double math");
-        expect(elements[4].Type).toEqual(Token.$$);
+        expect(elements[4].Value).toEqual("inline");
+        expect(elements[4].Type).toEqual(Token.$);
 
-        expect(elements[5].Value).toEqual("py code ");
-        expect(elements[5].Type).toEqual(Token['```']);
+        expect(elements[5].Value).toEqual(" m ");
+        expect(elements[5].Type).toEqual(Token['```mermaid']);
 
-        expect(elements[6].Value).toEqual("image");
-        expect(elements[6].Type).toEqual(Token['![[']);
+        expect(elements[6].Value).toEqual("py code ");
+        expect(elements[6].Type).toEqual(Token['```']);
     });
+
 });
