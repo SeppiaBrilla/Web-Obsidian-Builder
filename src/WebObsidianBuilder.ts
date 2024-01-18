@@ -2,7 +2,7 @@ import { ObsidianlinkArray } from './Links';
 import {  Graph } from './Graph';
 import { MarkdownElement, MathElement, Element, LinkElement, MermaidElement, VisualLinkElement, MathClass} from './ObsidianElements';
 import { Token } from './Tokens';
-import { BuildElements } from './Parser';
+import { BuildElements, build_regex} from './Parser';
 import { randomUUID } from "crypto";
 import { marked } from 'marked';
 
@@ -14,6 +14,7 @@ class WebObsidianBuilder{
     private NotInGraphLinksDict: {[id:string]: string};
     private AdiacentMatrix:number[][];
     private NoteNames:Array<string>;
+    private Regexes: Array<{[index: string]:Token | RegExp}>;
 
     private Mathcss: boolean = false;
 
@@ -30,19 +31,27 @@ class WebObsidianBuilder{
             for(let j: number = 0; j< len; j++) 
                 this.AdiacentMatrix[i][j] = 0;
         }
+        this.Regexes= [
+            {'token':Token['![['], 'value':build_regex(Token['![['], Token[']]'])},
+            {'token':Token['[['], 'value':build_regex(Token['[['], Token[']]'])},
+            {'token':Token.$$, 'value':build_regex(Token['$$'], Token['$$'])},
+            {'token':Token.$, 'value':build_regex(Token['$'], Token['$'])},
+            {'token':Token['```mermaid'], 'value':build_regex(Token['```mermaid'], Token['```'])},
+            {'token':Token['```'], 'value':build_regex(Token['```'], Token['```'])},
+        ];
         this.NoteNames = links.GetNames();
     }
 
     AddAndConvert(noteName:string, noteText:string){
         const from = this.NoteNames.indexOf(noteName);
-        const elements = BuildElements(noteText);
+        const elements = BuildElements(noteText, this.Regexes);
         
         noteText = this.RemoveElementAndConvert(noteText, elements, from);
         return this.Rebuild(noteText);
     }
 
     Convert(noteText:string){
-        const elements = BuildElements(noteText);
+        const elements = BuildElements(noteText, this.Regexes);
         
         noteText = this.RemoveElementAndConvert(noteText, elements);
         return this.Rebuild(noteText);

@@ -1,4 +1,5 @@
-import { Tokenize, BuildElements} from '../src/Parser';
+import { builtinModules } from 'module';
+import { Tokenize, BuildElements, build_regex, old_BuildElements} from '../src/Parser';
 import { MarkdownToken, Token } from '../src/Tokens';
 
 describe('Tokenize', () => {
@@ -101,10 +102,33 @@ const mdString = '$$math$$ [[link]] ```mermaid m ``` $\\phi$ $$double math$$ ```
 
 describe('BuildElements', () => {
     test('find elements', () =>{
-        let elements = BuildElements(mdString);
-
+        const regexes = [{
+          token: 3,
+          value: /!\[\[([a-zA-Z0-9\n\t \^\/,\.\*\\@\#\%\^\&()\{}_\-=\+`~;:'"<>\?\|\\n\t]+)\]\]/g
+        },
+        {
+          token: 2,
+          value: /(?<!!)\[\[([a-zA-Z0-9\n\t \^\/,\.\*\!\@\#\%\^\&()\{}_\-=\+`~;:'"<>\?\|\\n\t]+)\]\]/g
+        },
+        {
+          token: 0,
+          value: /\$\$([a-zA-Z0-9\n\t \[\]\^\/,\.\*\!\@\#\%\^\&()\{}_\-=\+`~;:'"<>\?\|\\n\t]+)\$\$/g
+        },
+        {
+          token: 1,
+          value: /(?<!\$)\$([a-zA-Z0-9\n\t \[\]\^\/,\.\*\!\@\#\%\^\&()\{}_\-=\+`~;:'"<>\?\|\\n\t]+)\$(?!\$)/g
+        },
+        {
+          token: 5,
+          value: /```mermaid([a-zA-Z0-9\n\t \[\]\^\/,\.\*\!\@\#\%\^\&()\{}_\-=\+~;:'"<>\?\|\\n\t]+)```(?!mermaid)/g
+        },
+        {
+          token: 6,
+          value: /```(?!mermaid)([a-zA-Z0-9\n\t \[\]\^\/,\.\*\!\@\#\%\^\&()\{}_\-=\+~;:'"<>\?\|\\n\t]+)```(?!mermaid)/g
+        }];
+        let elements = BuildElements(mdString, regexes);
         expect(elements.length).toEqual(7);
-        expect(elements[0].Value).toEqual("image");
+            expect(elements[0].Value).toEqual("image");
         expect(elements[0].Type).toEqual(Token['![[']);
 
         expect(elements[1].Value).toEqual("link");
@@ -125,15 +149,15 @@ describe('BuildElements', () => {
         expect(elements[6].Value).toEqual("py code ");
         expect(elements[6].Type).toEqual(Token['```']);
 
-         elements = BuildElements(`$$
+        elements = BuildElements(`$$
 \\begin{align}
 \\frac{\\partial L}{\\partial \\Theta_{k -1}} &= \\frac{\\partial L}{\\partial f_k} \\frac{\\partial f_k}{\\partial \\Theta_{k - 1}}\\
 \\frac{\\partial L}{\\partial \\Theta_{k -2}} &= \\frac{\\partial L}{\\partial f_k} \\frac{\\partial f_k}{\\partial f_{k-1}} \\frac{\\partial f_{k-1}}{\\partial \\Theta_{k-2}}\\
 \\frac{\\partial L}{\\partial \\Theta_{k -3}} &= \\frac{\\partial L}{\\partial f_k} \\frac{\\partial f_k}{\\partial f_{k-1}} \\frac{\\partial f_{k-1}}{\\partial f_{k-2}}\\frac{\\partial f_{k-2}}{\\partial \\Theta_{k-3}}\\
 &\\dots
 \\end{align}
-$$`);
-    expect(elements.length).toEqual(1);
-    expect(elements[0].Type).toEqual(Token.$$);
+$$`, regexes);
+        expect(elements.length).toEqual(1);
+        expect(elements[0].Type).toEqual(Token.$$);
     });
 });

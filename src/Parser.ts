@@ -1,11 +1,11 @@
 import { MarkdownElement } from './ObsidianElements';
 import { Token, MarkdownToken} from './Tokens';
 
-const REGEX = "([a-zA-Z0-9\\n\\t \\^\\/,\\.\\*\\!\\@\\#\\%\\^\\&()\\{}_\\-=\\+`~;:'\"<>\\?\\|\\\\n\\t]+)";
+const REGEX = "([a-zA-Z0-9\\n\\t \\[\\]\\^\\/,\\.\\*\\!\\@\\#\\%\\^\\&()\\{}_\\-=\\+`~;:'\"<>\\?\\|\\\\n\\t]+)";
 const CHAR_TO_ESCAPE = ['\\','.','$','*','+','?','(',')','[','{,','|', ']', '-']
 
 function addEscape(str:string){
-for (const char of CHAR_TO_ESCAPE){
+    for (const char of CHAR_TO_ESCAPE){
         str = str.replaceAll(char,`\\${char}`);
     }
     return str;
@@ -48,24 +48,27 @@ function build_regex(open_token:Token, close_token:Token): RegExp{
             }
         }
     }
+
+    let final_regex = REGEX; 
+    for(let i = 0; i < open_token_str.length; i++){
+        if(!open_token_str[i].match(/[a-z]/))
+            final_regex = final_regex.replace(addEscape(open_token_str[i]), '')
+    }
+    for(let i = 0; i < close_token_str.length; i++){
+        if(!close_token_str[i].match(/[a-z]/))
+            final_regex = final_regex.replace(addEscape(close_token_str[i]), '')
+    }
     let before = open_tokens_to_remove_before.length > 0 ? `(?<!${open_tokens_to_remove_before.join("|")})` : "";
     let after = open_tokens_to_remove_after.length > 0? `(?!${open_tokens_to_remove_after.join("|")})` : "";
     open_token_str = `${before}${addEscape(open_token_str)}${after}`;
     before = close_tokens_to_remove_before.length > 0 ? `(?<!${close_tokens_to_remove_before.join("|")})` : "";
     after = close_tokens_to_remove_after.length > 0? `(?!${close_tokens_to_remove_after.join("|")})` : "";
     close_token_str = `${before}${addEscape(close_token_str)}${after}`;
-    return RegExp(`${open_token_str}${REGEX}${close_token_str}`, "g");
+    return RegExp(`${open_token_str}${final_regex}${close_token_str}`, "g");
 }
 
-function BuildElements(mdString:string):Array<MarkdownElement>{
-    const regexes: Array<{[index: string]: Token | RegExp}> = [
-        {'token':Token['![['], 'value':build_regex(Token['![['], Token[']]'])},
-        {'token':Token['[['], 'value':build_regex(Token['[['], Token[']]'])},
-        {'token':Token.$$, 'value':build_regex(Token['$$'], Token['$$'])},
-        {'token':Token.$, 'value':build_regex(Token['$'], Token['$'])},
-        {'token':Token['```mermaid'], 'value':build_regex(Token['```mermaid'], Token['```'])},
-        {'token':Token['```'], 'value':build_regex(Token['```'], Token['```'])},
-    ];
+function BuildElements(mdString:string, regexes: Array<{[index: string]: Token | RegExp}>):Array<MarkdownElement>{
+    
     const elements:Array<MarkdownElement> = [];
     for(const val of regexes){
         const token: Token = <Token>val['token'];
