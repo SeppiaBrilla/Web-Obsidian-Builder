@@ -1,12 +1,11 @@
 import { ObsidianlinkArray } from './Links';
 import {  Graph } from './Graph';
 import { MarkdownElement, MathElement, Element, LinkElement, MermaidElement, VisualLinkElement, MathClass} from './ObsidianElements';
-import { Token } from './Tokens';
 import { BuildElements, build_regex} from './Parser';
 import { randomUUID } from "crypto";
 import { marked } from 'marked';
 
-
+// enum Token 
 class WebObsidianBuilder{
     
     private Links:ObsidianlinkArray;
@@ -14,7 +13,7 @@ class WebObsidianBuilder{
     private NotInGraphLinksDict: {[id:string]: string};
     private AdiacentMatrix:number[][];
     private NoteNames:Array<string>;
-    private Regexes: Array<{[index: string]:Token | RegExp}>;
+    private Regexes: Array<{[index: string]:string | RegExp}>;
 
     private Mathcss: boolean = false;
 
@@ -31,13 +30,14 @@ class WebObsidianBuilder{
             for(let j: number = 0; j< len; j++) 
                 this.AdiacentMatrix[i][j] = 0;
         }
+        const all_tokens = ['$$', '$', '[[', '![[', ']]', '```mermaid', '```', 'u']
         this.Regexes= [
-            {'token':Token['![['], 'value':build_regex(Token['![['], Token[']]'])},
-            {'token':Token['[['], 'value':build_regex(Token['[['], Token[']]'])},
-            {'token':Token.$$, 'value':build_regex(Token['$$'], Token['$$'])},
-            {'token':Token.$, 'value':build_regex(Token['$'], Token['$'])},
-            {'token':Token['```mermaid'], 'value':build_regex(Token['```mermaid'], Token['```'])},
-            {'token':Token['```'], 'value':build_regex(Token['```'], Token['```'])},
+            {'token':'![[', 'value':build_regex('![[', ']]', all_tokens)},
+            {'token':'[[', 'value':build_regex('[[', ']]', all_tokens)},
+            {'token':'$$', 'value':build_regex('$$', '$$', all_tokens)},
+            {'token':'$', 'value':build_regex('$', '$', all_tokens)},
+            {'token':'```mermaid', 'value':build_regex('```mermaid', '```', all_tokens)},
+            {'token':'```', 'value':build_regex('```', '```', all_tokens)},
         ];
         this.NoteNames = links.GetNames();
     }
@@ -74,26 +74,26 @@ class WebObsidianBuilder{
     private RemoveElementAndConvert(noteText:string, elements:Array<MarkdownElement>, noteIndex:number|undefined = undefined){
         const convertOnly: boolean = noteIndex === undefined;
         for(const element of elements){
-            if(element.Type === Token.u)
+            if(element.Type === 'u')
                 throw new Error("undefined element found");
-            switch(Token[element.Type]){
-                case Token[Token.$$]:
+            switch(element.Type){
+                case '$$':
                     noteText = this.ConvertDisplayMathElement(element, noteText);
                     this.Mathcss = true;
                 break;
-                case Token[Token.$]:
+                case '$':
                     noteText = this.ConvertInlineMathElement(element, noteText);
                     this.Mathcss = true;
                 break;
-                case Token[Token['![[']]:
-                case Token[Token['[[']]:
+                case '![[':
+                case '[[':
                     if(convertOnly){
                         noteText = this.ConvertLinksElement(element, noteText);
                         break;
                     }
                     noteText = this.BuildGraphAndConvert(element, noteText, (<number>noteIndex));
                 break;
-                case Token[Token['```mermaid']]:
+                case '```mermaid':
                     noteText = this.ConvertMermaidElement(element,noteText);
                 break;
             }
@@ -136,7 +136,7 @@ class WebObsidianBuilder{
             if(link === undefined)
                 link = reference;
         }
-        if(element.Type === Token['[[']){
+        if(element.Type === '[['){
             this.Elements.push(new LinkElement(currentLink, id, link));
             return mdString.replace(`[[${element.Value}]]`, id); 
         }

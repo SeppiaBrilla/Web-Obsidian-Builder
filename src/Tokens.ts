@@ -1,20 +1,11 @@
-enum Token {
-    '$$',
-    '$',
-    '[[',
-    '![[',
-    ']]',
-    '```mermaid',
-    '```',
-    'u'
-}
+
 class MarkdownToken{
-    public Value: Token;
+    public Value: string;
     public Position:number;
-    constructor(value:Token, position:number){
+    constructor(value:string, position:number){
         this.Value = value;
         this.Position = position;
     }
 }
 
-export { Token, MarkdownToken }
+export { MarkdownToken }

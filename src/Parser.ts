@@ -1,8 +1,9 @@
 import { MarkdownElement } from './ObsidianElements';
-import { Token, MarkdownToken} from './Tokens';
+import { MarkdownToken} from './Tokens';
 
 const REGEX = "([a-zA-Z0-9\\n\\t \\[\\]\\^\\/,\\.\\*\\!\\@\\#\\%\\^\\&()\\{}_\\-=\\+`~;:'\"<>\\?\\|\\\\n\\t]+)";
-const CHAR_TO_ESCAPE = ['\\','.','$','*','+','?','(',')','[','{,','|', ']', '-']
+const CHAR_TO_ESCAPE = ['\\','.','$','*','+','?','(',')','[','{,','|', ']', '-'];
+const ALL_TOKENS = ['$$', '$', '[[', '![[', ']]', '```mermaid', '```', 'u'];
 
 function addEscape(str:string){
     for (const char of CHAR_TO_ESCAPE){
@@ -11,37 +12,35 @@ function addEscape(str:string){
     return str;
 }
 
-function build_regex(open_token:Token, close_token:Token): RegExp{
-    let open_token_str: string = Token[open_token];
-    let close_token_str: string = Token[close_token];
+function build_regex(open_token:string, close_token:string, all_tokens:Array<string>): RegExp{
     const open_tokens_to_remove_before = [];
     const open_tokens_to_remove_after = [];
     const close_tokens_to_remove_before = [];
     const close_tokens_to_remove_after = [];
-    for(const token of Object.keys(Token)){
+    for(const token of all_tokens){
         if(isNaN(+token)){
-            if(token.length > open_token_str.length){
+            if(token.length > open_token.length){
                 let removed_before = false;
-                if(token.substring(token.length - open_token_str.length, token.length) == open_token_str){
-                    const tokenToRemove = token.replace(open_token_str, '');
+                if(token.substring(token.length - open_token.length, token.length) == open_token){
+                    const tokenToRemove = token.replace(open_token, '');
                     open_tokens_to_remove_before.push(addEscape(tokenToRemove));
                     removed_before = true;
                 }
-                if(token.substring(0, open_token_str.length) == open_token_str){
-                    const tokenToRemove = token.replace(open_token_str, '');
+                if(token.substring(0, open_token.length) == open_token){
+                    const tokenToRemove = token.replace(open_token, '');
                     if(!removed_before && tokenToRemove != open_tokens_to_remove_before[open_tokens_to_remove_before.length - 1])
                         open_tokens_to_remove_after.push(addEscape(tokenToRemove));
                 }
             }
-            if(token.length > close_token_str.length){
+            if(token.length > close_token.length){
                 let removed_after = false;
-                if(token.substring(0, close_token_str.length) == close_token_str){
-                    const tokenToRemove = token.replace(close_token_str, '');
+                if(token.substring(0, close_token.length) == close_token){
+                    const tokenToRemove = token.replace(close_token, '');
                     close_tokens_to_remove_after.push(addEscape(tokenToRemove));
                     removed_after = true;
                 }
-                if(token.substring(token.length - close_token_str.length, token.length) == close_token_str){
-                    const tokenToRemove = token.replace(close_token_str, '');
+                if(token.substring(token.length - close_token.length, token.length) == close_token){
+                    const tokenToRemove = token.replace(close_token, '');
                     if(!removed_after && tokenToRemove != close_tokens_to_remove_after[close_tokens_to_remove_after.length - 1])
                         close_tokens_to_remove_before.push(addEscape(tokenToRemove));
                 }
@@ -50,28 +49,28 @@ function build_regex(open_token:Token, close_token:Token): RegExp{
     }
 
     let final_regex = REGEX; 
-    for(let i = 0; i < open_token_str.length; i++){
-        if(!open_token_str[i].match(/[a-z]/))
-            final_regex = final_regex.replace(addEscape(open_token_str[i]), '')
+    for(let i = 0; i < open_token.length; i++){
+        if(!open_token[i].match(/[a-z]/))
+            final_regex = final_regex.replace(addEscape(open_token[i]), '')
     }
-    for(let i = 0; i < close_token_str.length; i++){
-        if(!close_token_str[i].match(/[a-z]/))
-            final_regex = final_regex.replace(addEscape(close_token_str[i]), '')
+    for(let i = 0; i < close_token.length; i++){
+        if(!close_token[i].match(/[a-z]/))
+            final_regex = final_regex.replace(addEscape(close_token[i]), '')
     }
     let before = open_tokens_to_remove_before.length > 0 ? `(?<!${open_tokens_to_remove_before.join("|")})` : "";
     let after = open_tokens_to_remove_after.length > 0? `(?!${open_tokens_to_remove_after.join("|")})` : "";
-    open_token_str = `${before}${addEscape(open_token_str)}${after}`;
+    open_token = `${before}${addEscape(open_token)}${after}`;
     before = close_tokens_to_remove_before.length > 0 ? `(?<!${close_tokens_to_remove_before.join("|")})` : "";
     after = close_tokens_to_remove_after.length > 0? `(?!${close_tokens_to_remove_after.join("|")})` : "";
-    close_token_str = `${before}${addEscape(close_token_str)}${after}`;
-    return RegExp(`${open_token_str}${final_regex}${close_token_str}`, "g");
+    close_token = `${before}${addEscape(close_token)}${after}`;
+    return RegExp(`${open_token}${final_regex}${close_token}`, "g");
 }
 
-function BuildElements(mdString:string, regexes: Array<{[index: string]: Token | RegExp}>):Array<MarkdownElement>{
+function BuildElements(mdString:string, regexes: Array<{[index: string]: string | RegExp}>):Array<MarkdownElement>{
     
     const elements:Array<MarkdownElement> = [];
     for(const val of regexes){
-        const token: Token = <Token>val['token'];
+        const token: string = <string>val['token'];
         const regex: RegExp = <RegExp>val['value'];
         const regex_results = [...mdString.matchAll(regex)];
         for(const result of regex_results){
@@ -81,23 +80,19 @@ function BuildElements(mdString:string, regexes: Array<{[index: string]: Token |
     return elements;
 }
 
-function ToToken(str:string): Token{
+function ToToken(str:string): string{
 
     for(let i = str.length; i > 0; i --){
         const tokenStr = str.substring(0, i);
-         if(!isNaN(+tokenStr))
-            return Token.u
-        /* eslint-disable */
-        const t: Token | undefined = (<any>Token)[tokenStr];
-        /* eslint-enable */
-        if(t !== undefined)
-            return t
+        const idx = ALL_TOKENS.indexOf(tokenStr);
+        if(idx != -1)
+            return ALL_TOKENS[idx];
     }
-    return Token.u;
+    return 'u';
 }
 
 function Tokenize(mdString: string): Array<MarkdownToken>{
-    const steps: Array<number> = [...new Set(Object.keys(Token).map(v => v.length))];
+    const steps: Array<number> = [...new Set(ALL_TOKENS.map(v => v.length))];
     const maxStep: number = Math.max(...steps);
     const match: Array<MarkdownToken> = [];
     let i = 0;
@@ -105,17 +100,17 @@ function Tokenize(mdString: string): Array<MarkdownToken>{
         if(mdString[i] === '\\')
             i += 2;
         const str: string = mdString.substring(i, Math.min(i+maxStep, mdString.length));
-        const token: Token = ToToken(str);
-        if(token != Token.u){
+        const token: string = ToToken(str);
+        if(token != 'u'){
             match.push(new MarkdownToken(token, i));
-            i += Token[token].length - 1;
+            i += token.length - 1;
         }
         i++;
     }
     return match;
 }
 
-const Closer = [Token[']]'], Token.$, Token.$$, Token['```']]
+const Closer = [']]', '$', '$$', '```']
 
 
 function old_BuildElements(tokens: Array<MarkdownToken>, mdString:string): Array<MarkdownElement>{
@@ -128,7 +123,7 @@ function old_BuildElements(tokens: Array<MarkdownToken>, mdString:string): Array
         opened[t.toString()] = undefined;
     }
     for(let i = 0; i < tokens.length; i++){
-        const t = Token[tokens[i].Value];
+        const t = tokens[i].Value;
         const token = (<MarkdownToken>opened[t]);
         let str: string = "";
         switch(t){
@@ -141,7 +136,7 @@ function old_BuildElements(tokens: Array<MarkdownToken>, mdString:string): Array
             case ']]':
                 if(opened[t] === undefined)
                     throw new Error(`Wrong markdown file format: unexpected token ${t}`);
-                str = mdString.substring(token.Position + Token[token.Value].length, tokens[i].Position);
+                str = mdString.substring(token.Position + token.Value.length, tokens[i].Position);
                 elements.push(new MarkdownElement(str, token.Value));
                 opened[t] = undefined;
             break;
@@ -151,7 +146,7 @@ function old_BuildElements(tokens: Array<MarkdownToken>, mdString:string): Array
                     break;
                 }
                 str = mdString.substring((<MarkdownToken>opened['$$']).Position + 2, tokens[i].Position);
-                elements.push(new MarkdownElement(str, Token.$$));
+                elements.push(new MarkdownElement(str, '$$'));
                 opened[t] = undefined;
             break;
             case '$':
@@ -160,7 +155,7 @@ function old_BuildElements(tokens: Array<MarkdownToken>, mdString:string): Array
                     break;
                 }
                 str = mdString.substring((<MarkdownToken>opened['$']).Position + 1, tokens[i].Position);
-                elements.push(new MarkdownElement(str, Token.$));
+                elements.push(new MarkdownElement(str, '$'));
                 opened[t] = undefined;
             break;
             case '```mermaid':
@@ -173,7 +168,7 @@ function old_BuildElements(tokens: Array<MarkdownToken>, mdString:string): Array
                     opened[t] = tokens[i];
                     break;
                 }
-                str = mdString.substring(token.Position + Token[token.Value].length, tokens[i].Position);
+                str = mdString.substring(token.Position + token.Value.length, tokens[i].Position);
                 elements.push(new MarkdownElement(str, (<MarkdownToken>opened[t]).Value));
                 opened[t] = undefined;
             break;

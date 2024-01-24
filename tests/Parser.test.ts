@@ -1,15 +1,13 @@
-import { builtinModules } from 'module';
-import { Tokenize, BuildElements, build_regex, old_BuildElements} from '../src/Parser';
-import { MarkdownToken, Token } from '../src/Tokens';
+import { Tokenize, BuildElements, } from '../src/Parser';
 
 describe('Tokenize', () => {
     test('inline math', () => {
         const mdStr = '$123$';
         const tokens = Tokenize(mdStr);
         expect(tokens.length).toEqual(2);
-        expect(tokens[0].Value).toEqual(Token.$);
+        expect(tokens[0].Value).toEqual('$');
         expect(tokens[0].Position).toEqual(0);
-        expect(tokens[1].Value).toEqual(Token.$);
+        expect(tokens[1].Value).toEqual('$');
         expect(tokens[1].Position).toEqual(4);
 
     });
@@ -18,9 +16,9 @@ describe('Tokenize', () => {
         const mdStr = '$$123$$';
         const tokens = Tokenize(mdStr);
         expect(tokens.length).toEqual(2);
-        expect(tokens[0].Value).toEqual(Token.$$);
+        expect(tokens[0].Value).toEqual('$$');
         expect(tokens[0].Position).toEqual(0);
-        expect(tokens[1].Value).toEqual(Token.$$);
+        expect(tokens[1].Value).toEqual('$$');
         expect(tokens[1].Position).toEqual(5);
     });
     
@@ -28,9 +26,9 @@ describe('Tokenize', () => {
         const mdStr = '[[123]]';
         const tokens = Tokenize(mdStr);
         expect(tokens.length).toEqual(2);
-        expect(tokens[0].Value).toEqual(Token['[[']);
+        expect(tokens[0].Value).toEqual('[[');
         expect(tokens[0].Position).toEqual(0);
-        expect(tokens[1].Value).toEqual(Token[']]']);
+        expect(tokens[1].Value).toEqual(']]');
         expect(tokens[1].Position).toEqual(5);
     });
     
@@ -38,9 +36,9 @@ describe('Tokenize', () => {
         const mdStr = '![[123]]';
         const tokens = Tokenize(mdStr);
         expect(tokens.length).toEqual(2);
-        expect(tokens[0].Value).toEqual(Token['![[']);
+        expect(tokens[0].Value).toEqual('![[');
         expect(tokens[0].Position).toEqual(0);
-        expect(tokens[1].Value).toEqual(Token[']]']);
+        expect(tokens[1].Value).toEqual(']]');
         expect(tokens[1].Position).toEqual(6);
     });
 
@@ -48,9 +46,9 @@ describe('Tokenize', () => {
         const mdStr = '```mermaid mermaid text ```';
         const tokens = Tokenize(mdStr);
         expect(tokens.length).toEqual(2);
-        expect(tokens[0].Value).toEqual(Token['```mermaid']);
+        expect(tokens[0].Value).toEqual('```mermaid');
         expect(tokens[0].Position).toEqual(0);
-        expect(tokens[1].Value).toEqual(Token['```']);
+        expect(tokens[1].Value).toEqual('```');
         expect(tokens[1].Position).toEqual(24);
     });
 
@@ -58,9 +56,9 @@ describe('Tokenize', () => {
         const mdStr = '```py test() ```';
         const tokens = Tokenize(mdStr);
         expect(tokens.length).toEqual(2);
-        expect(tokens[0].Value).toEqual(Token['```']);
+        expect(tokens[0].Value).toEqual('```');
         expect(tokens[0].Position).toEqual(0);
-        expect(tokens[1].Value).toEqual(Token['```']);
+        expect(tokens[1].Value).toEqual('```');
         expect(tokens[1].Position).toEqual(13);
     });
 
@@ -68,21 +66,21 @@ describe('Tokenize', () => {
         const mdStr = '[[123]] $$math$$ $inline$ ```mermaid m ```';
         const tokens = Tokenize(mdStr);
         expect(tokens.length).toEqual(8);
-        expect(tokens[0].Value).toEqual(Token['[[']);
+        expect(tokens[0].Value).toEqual('[[');
         expect(tokens[0].Position).toEqual(0);
-        expect(tokens[1].Value).toEqual(Token[']]']);
+        expect(tokens[1].Value).toEqual(']]');
         expect(tokens[1].Position).toEqual(5);
-        expect(tokens[2].Value).toEqual(Token['$$']);
+        expect(tokens[2].Value).toEqual('$$');
         expect(tokens[2].Position).toEqual(8);
-        expect(tokens[3].Value).toEqual(Token['$$']);
+        expect(tokens[3].Value).toEqual('$$');
         expect(tokens[3].Position).toEqual(14);
-        expect(tokens[4].Value).toEqual(Token['$']);
+        expect(tokens[4].Value).toEqual('$');
         expect(tokens[4].Position).toEqual(17);
-        expect(tokens[5].Value).toEqual(Token['$']);
+        expect(tokens[5].Value).toEqual('$');
         expect(tokens[5].Position).toEqual(24);
-        expect(tokens[6].Value).toEqual(Token['```mermaid']);
+        expect(tokens[6].Value).toEqual('```mermaid');
         expect(tokens[6].Position).toEqual(26);
-        expect(tokens[7].Value).toEqual(Token['```']);
+        expect(tokens[7].Value).toEqual('```');
         expect(tokens[7].Position).toEqual(39);
     });
 
@@ -91,9 +89,9 @@ describe('Tokenize', () => {
         const tokens = Tokenize(mdStr);
 
         expect(tokens.length).toEqual(2);
-        expect(tokens[0].Value).toEqual(Token['$']);
+        expect(tokens[0].Value).toEqual('$');
         expect(tokens[0].Position).toEqual(0);
-        expect(tokens[1].Value).toEqual(Token['$']);
+        expect(tokens[1].Value).toEqual('$');
         expect(tokens[1].Position).toEqual(14);
     });
 });
@@ -103,51 +101,51 @@ const mdString = '$$math$$ [[link]] ```mermaid m ``` $\\phi$ $$double math$$ ```
 describe('BuildElements', () => {
     test('find elements', () =>{
         const regexes = [{
-          token: 3,
+          token: '![[',
           value: /!\[\[([a-zA-Z0-9\n\t \^\/,\.\*\\@\#\%\^\&()\{}_\-=\+`~;:'"<>\?\|\\n\t]+)\]\]/g
         },
         {
-          token: 2,
+          token: '[[',
           value: /(?<!!)\[\[([a-zA-Z0-9\n\t \^\/,\.\*\!\@\#\%\^\&()\{}_\-=\+`~;:'"<>\?\|\\n\t]+)\]\]/g
         },
         {
-          token: 0,
+          token: '$$',
           value: /\$\$([a-zA-Z0-9\n\t \[\]\^\/,\.\*\!\@\#\%\^\&()\{}_\-=\+`~;:'"<>\?\|\\n\t]+)\$\$/g
         },
         {
-          token: 1,
+          token: '$',
           value: /(?<!\$)\$([a-zA-Z0-9\n\t \[\]\^\/,\.\*\!\@\#\%\^\&()\{}_\-=\+`~;:'"<>\?\|\\n\t]+)\$(?!\$)/g
         },
         {
-          token: 5,
+          token: '```mermaid',
           value: /```mermaid([a-zA-Z0-9\n\t \[\]\^\/,\.\*\!\@\#\%\^\&()\{}_\-=\+~;:'"<>\?\|\\n\t]+)```(?!mermaid)/g
         },
         {
-          token: 6,
+          token: '```',
           value: /```(?!mermaid)([a-zA-Z0-9\n\t \[\]\^\/,\.\*\!\@\#\%\^\&()\{}_\-=\+~;:'"<>\?\|\\n\t]+)```(?!mermaid)/g
         }];
         let elements = BuildElements(mdString, regexes);
         expect(elements.length).toEqual(7);
             expect(elements[0].Value).toEqual("image");
-        expect(elements[0].Type).toEqual(Token['![[']);
+        expect(elements[0].Type).toEqual('![[');
 
         expect(elements[1].Value).toEqual("link");
-        expect(elements[1].Type).toEqual(Token['[[']);
+        expect(elements[1].Type).toEqual('[[');
 
         expect(elements[2].Value).toEqual("math");
-        expect(elements[2].Type).toEqual(Token.$$);
+        expect(elements[2].Type).toEqual('$$');
 
         expect(elements[3].Value).toEqual("double math");
-        expect(elements[3].Type).toEqual(Token.$$);
+        expect(elements[3].Type).toEqual('$$');
 
         expect(elements[4].Value).toEqual("\\phi");
-        expect(elements[4].Type).toEqual(Token.$);
+        expect(elements[4].Type).toEqual('$');
 
         expect(elements[5].Value).toEqual(" m ");
-        expect(elements[5].Type).toEqual(Token['```mermaid']);
+        expect(elements[5].Type).toEqual('```mermaid');
 
         expect(elements[6].Value).toEqual("py code ");
-        expect(elements[6].Type).toEqual(Token['```']);
+        expect(elements[6].Type).toEqual('```');
 
         elements = BuildElements(`$$
 \\begin{align}
@@ -158,6 +156,6 @@ describe('BuildElements', () => {
 \\end{align}
 $$`, regexes);
         expect(elements.length).toEqual(1);
-        expect(elements[0].Type).toEqual(Token.$$);
+        expect(elements[0].Type).toEqual('$$');
     });
 });
