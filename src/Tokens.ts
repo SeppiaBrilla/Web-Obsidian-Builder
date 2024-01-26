@@ -1,4 +1,14 @@
 
+class Token{
+    public Symbol:string;
+    public Regex:RegExp;
+
+    constructor(symbol:string, regex:RegExp){
+        this.Symbol = symbol;
+        this.Regex = regex;
+    }
+}
+
 class MarkdownToken{
     public Value: string;
     public Position:number;
@@ -8,4 +18,4 @@ class MarkdownToken{
     }
 }
 
-export { MarkdownToken }
+export { MarkdownToken, Token}
