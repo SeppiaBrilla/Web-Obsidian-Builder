@@ -1,5 +1,4 @@
 import { marked } from 'marked';
-import { Token } from './Tokens';
 import * as katex  from 'katex';
  
 interface Element{
@@ -65,9 +64,9 @@ ${value}
 
 class MarkdownElement{
     public Value: string;
-    public Type: Token;
+    public Type: string;
 
-    constructor(value:string, type:Token){
+    constructor(value:string, type:string){
         this.Value = value;
         this.Type = type;
     }
