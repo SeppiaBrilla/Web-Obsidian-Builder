@@ -13,37 +13,36 @@ class WebObsidianBuilder{
 	private NotInGraphLinksDict: {[id:string]: string};
 	private AdiacentMatrix:number[][];
 	private NoteNames:Array<string>;
-	private Regexes: Array<{[index: string]:string | RegExp}>;
 	private Tokens: Array<Token>;
     private Mathcss: boolean = false;
 
     private Elements: Array<Element> = [];
 
 	constructor(links:ObsidianlinkArray, notInGraphLinks:ObsidianlinkArray| undefined = undefined){
+
         this.Links = links;
 		this.LinksDict = links.toDict();
 		this.NotInGraphLinksDict = notInGraphLinks !== undefined ? notInGraphLinks.toDict(): {};
 		this.AdiacentMatrix = [];
+
 		const len = this.Links.length;
 		for(let i: number = 0; i < len; i++) {
             this.AdiacentMatrix[i] = [];
             for(let j: number = 0; j< len; j++) 
                 this.AdiacentMatrix[i][j] = 0;
 		}
+
 		const all_tokens = ['$$', '$', '[[', '![[', ']]', '```mermaid', '```', 'u']
-		this.Regexes= [
-            {'token':'![[', 'value':build_regex('![[', ']]', all_tokens)},
-            {'token':'[[', 'value':build_regex('[[', ']]', all_tokens)},
-            {'token':'$$', 'value':build_regex('$$', '$$', all_tokens)},
-            {'token':'$', 'value':build_regex('$', '$', all_tokens)},
-            {'token':'```mermaid', 'value':build_regex('```mermaid', '```', all_tokens)},
-            {'token':'```', 'value':build_regex('```', '```', all_tokens)},
+
+		this.Tokens = [
+            new Token('![[', build_regex('![[', ']]', all_tokens)),
+            new Token('[[', build_regex('[[', ']]', all_tokens)),
+            new Token('$$', build_regex('$$', '$$', all_tokens)),
+            new Token('$', build_regex('$', '$', all_tokens)),
+            new Token('```mermaid', build_regex('```mermaid', '```', all_tokens)),
+            new Token('```', build_regex('```', '```', all_tokens)),
 		];
-		this.Tokens = [];
-		for(let i = 0; i < this.Regexes.length; i++){
-            const regex = this.Regexes[i];
-            this.Tokens.push(new Token(<string>regex['token'], <RegExp>regex['value']));
-        }
+
         this.NoteNames = links.GetNames();
     }
 
