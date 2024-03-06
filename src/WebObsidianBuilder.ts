@@ -69,14 +69,14 @@ class WebObsidianBuilder{
 
 	AddAndConvert(noteName:string, noteText:string): string{
         const from = this.NoteNames.indexOf(noteName);
-        const elements = BuildElements(noteText, this.Regexes);
+        const elements = BuildElements(noteText, this.Tokens);
 
 		noteText = this.RemoveElementAndConvert(noteText, elements, from);
         return this.Rebuild(noteText);
 	}
 
 	Convert(noteText:string): string{
-        const elements = BuildElements(noteText, this.Regexes);
+        const elements = BuildElements(noteText, this.Tokens);
 
         noteText = this.RemoveElementAndConvert(noteText, elements);
         return this.Rebuild(noteText);

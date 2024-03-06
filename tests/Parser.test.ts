@@ -1,4 +1,5 @@
 import { Tokenize, BuildElements, } from '../src/Parser';
+import { Token } from '../src/Tokens';
 
 describe('Tokenize', () => {
     test('inline math', () => {
@@ -100,30 +101,14 @@ const mdString = '$$math$$ [[link]] ```mermaid m ``` $\\phi$ $$double math$$ ```
 
 describe('BuildElements', () => {
     test('find elements', () =>{
-        const regexes = [{
-          token: '![[',
-          value: /!\[\[([a-zA-Z0-9\n\t \^\/,\.\*\\@\#\%\^\&()\{}_\-=\+`~;:'"<>\?\|\\n\t]+)\]\]/g
-        },
-        {
-          token: '[[',
-          value: /(?<!!)\[\[([a-zA-Z0-9\n\t \^\/,\.\*\!\@\#\%\^\&()\{}_\-=\+`~;:'"<>\?\|\\n\t]+)\]\]/g
-        },
-        {
-          token: '$$',
-          value: /\$\$([a-zA-Z0-9\n\t \[\]\^\/,\.\*\!\@\#\%\^\&()\{}_\-=\+`~;:'"<>\?\|\\n\t]+)\$\$/g
-        },
-        {
-          token: '$',
-          value: /(?<!\$)\$([a-zA-Z0-9\n\t \[\]\^\/,\.\*\!\@\#\%\^\&()\{}_\-=\+`~;:'"<>\?\|\\n\t]+)\$(?!\$)/g
-        },
-        {
-          token: '```mermaid',
-          value: /```mermaid([a-zA-Z0-9\n\t \[\]\^\/,\.\*\!\@\#\%\^\&()\{}_\-=\+~;:'"<>\?\|\\n\t]+)```(?!mermaid)/g
-        },
-        {
-          token: '```',
-          value: /```(?!mermaid)([a-zA-Z0-9\n\t \[\]\^\/,\.\*\!\@\#\%\^\&()\{}_\-=\+~;:'"<>\?\|\\n\t]+)```(?!mermaid)/g
-        }];
+        const regexes = [
+            new Token('![[', /!\[\[([a-zA-Z0-9\n\t \^\/,\.\*\\@\#\%\^\&()\{}_\-=\+`~;:'"<>\?\|\\n\t]+)\]\]/g),
+            new Token('[[', /(?<!!)\[\[([a-zA-Z0-9\n\t \^\/,\.\*\!\@\#\%\^\&()\{}_\-=\+`~;:'"<>\?\|\\n\t]+)\]\]/g),
+            new Token('$$', /\$\$([a-zA-Z0-9\n\t \[\]\^\/,\.\*\!\@\#\%\^\&()\{}_\-=\+`~;:'"<>\?\|\\n\t]+)\$\$/g),
+            new Token('$', /(?<!\$)\$([a-zA-Z0-9\n\t \[\]\^\/,\.\*\!\@\#\%\^\&()\{}_\-=\+`~;:'"<>\?\|\\n\t]+)\$(?!\$)/g),
+            new Token('```mermaid', /```mermaid([a-zA-Z0-9\n\t \[\]\^\/,\.\*\!\@\#\%\^\&()\{}_\-=\+~;:'"<>\?\|\\n\t]+)```(?!mermaid)/g),
+            new Token('```', /```(?!mermaid)([a-zA-Z0-9\n\t \[\]\^\/,\.\*\!\@\#\%\^\&()\{}_\-=\+~;:'"<>\?\|\\n\t]+)```(?!mermaid)/g)
+        ];
         let elements = BuildElements(mdString, regexes);
         expect(elements.length).toEqual(7);
             expect(elements[0].Value).toEqual("image");

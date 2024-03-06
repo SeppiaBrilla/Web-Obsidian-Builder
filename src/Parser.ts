@@ -1,3 +1,4 @@
+import { Token } from './Tokens';
 import { MarkdownElement } from './ObsidianElements';
 import { MarkdownToken} from './Tokens';
 
@@ -66,15 +67,14 @@ function build_regex(open_token:string, close_token:string, all_tokens:Array<str
     return RegExp(`${open_token}${final_regex}${close_token}`, "g");
 }
 
-function BuildElements(mdString:string, regexes: Array<{[index: string]: string | RegExp}>):Array<MarkdownElement>{
+function BuildElements(mdString:string, tokens: Array<Token>):Array<MarkdownElement>{
     
     const elements:Array<MarkdownElement> = [];
-    for(const val of regexes){
-        const token: string = <string>val['token'];
-        const regex: RegExp = <RegExp>val['value'];
-        const regex_results = [...mdString.matchAll(regex)];
+    for(let i = 0; i < tokens.length; i++){
+        const token = tokens[i];
+        const regex_results = [...mdString.matchAll(token.Regex)];
         for(const result of regex_results){
-            elements.push(new MarkdownElement(result[1], token));
+            elements.push(new MarkdownElement(result[1], token.Symbol));
         }
     }
     return elements;
